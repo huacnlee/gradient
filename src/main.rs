@@ -109,8 +109,6 @@ fn color_stop(color: Hsla, percentage: Option<f32>) -> ColorStop {
 pub enum GradientType {
     Linear,
     RepeatingLinear,
-    Radial,
-    Conic,
 }
 
 enum Side {
@@ -166,24 +164,6 @@ impl Gradient {
             gradient_type: GradientType::RepeatingLinear,
             start,
             end,
-        }
-    }
-
-    pub fn radial(start: Point<Pixels>, colors: Vec<ColorStop>) -> Gradient {
-        Gradient {
-            colors,
-            gradient_type: GradientType::Radial,
-            start,
-            end: Point { x: 1.0, y: 1.0 },
-        }
-    }
-
-    pub fn conic(start: Point<Pixels>, colors: Vec<ColorStop>) -> Gradient {
-        Gradient {
-            colors,
-            gradient_type: GradientType::Conic,
-            start,
-            end: Point { x: 1.0, y: 1.0 },
         }
     }
 
@@ -283,19 +263,6 @@ impl Gradient {
                 let dot = ((x - self.start.x) * dx + (y - self.start.y) * dy) / dist;
                 dot / dist
             }
-            GradientType::Radial => {
-                let cx = self.start.x;
-                let cy = self.start.y;
-                let max_dist = ((cx - self.end.x).powi(2) + (cy - self.end.y).powi(2)).sqrt();
-                let dist = ((x - cx).powi(2) + (y - cy).powi(2)).sqrt();
-                dist / max_dist
-            }
-            GradientType::Conic => {
-                let cx = self.start.x;
-                let cy = self.start.y;
-
-                ((y - cy).atan2(x - cx) + PI) / (2.0 * PI)
-            }
         };
 
         let t = if matches!(self.gradient_type, GradientType::RepeatingLinear) {
@@ -319,46 +286,12 @@ impl Gradient {
     }
 }
 
-fn generate_conic() {
-    let width = 800;
-    let height = 600;
-
-    let gradient = Gradient::conic(
-        Point {
-            x: width as Pixels / 2.0,
-            y: height as Pixels / 2.0,
-        },
-        vec![
-            color_stop(hsla(0.0, 1.0, 0.5, 1.0), Some(0.0)), // red 0%
-            color_stop(hsla(30.0 / 360.0, 1.0, 0.5, 1.0), Some(0.14)), // orange 14%
-            color_stop(hsla(60.0 / 360.0, 1.0, 0.5, 1.0), Some(0.28)), // yellow 28%
-            color_stop(hsla(120.0 / 360.0, 1.0, 0.5, 1.0), Some(0.42)), // green 42%
-            color_stop(hsla(240.0 / 360.0, 1.0, 0.5, 1.0), Some(0.57)), // blue 57%
-            color_stop(hsla(275.0 / 360.0, 1.0, 0.5, 1.0), Some(0.71)), // indigo 71%
-            color_stop(hsla(300.0 / 360.0, 1.0, 0.5, 1.0), Some(0.85)), // violet 85%
-            color_stop(hsla(0.0, 1.0, 0.5, 1.0), Some(1.0)), // red 100%
-        ],
-    );
-
-    let mut img = ImageBuffer::new(width, height);
-
-    for (x, y, pixel) in img.enumerate_pixels_mut() {
-        let color = gradient.calculate_color(Point {
-            x: x as Pixels,
-            y: y as Pixels,
-        });
-        *pixel = color.to_rgba();
-    }
-
-    img.save("gradient-conic.png").unwrap();
-}
-
-fn generate_linear() {
+fn generate_linear(angle_or_corner: AngleOrCorner, fname: &str) {
     let width = 800;
     let height = 600;
 
     let gradient = Gradient::linear(
-        AngleOrCorner::To(Side::Right),
+        angle_or_corner,
         vec![
             color_stop(hsla(0.0, 1.0, 0.5, 1.0), Some(0.0)), // red 0%
             color_stop(hsla(30.0 / 360.0, 1.0, 0.5, 1.0), Some(0.14)), // orange 14%
@@ -383,39 +316,12 @@ fn generate_linear() {
         *pixel = color.to_rgba();
     }
 
-    img.save("gradient-linear.png").unwrap();
-}
-
-fn generate_radial() {
-    let width = 800;
-    let height = 600;
-
-    let gradient = Gradient::radial(
-        Point {
-            x: width as Pixels / 2.0,
-            y: height as Pixels / 2.0,
-        },
-        vec![
-            color_stop(hsla(0.0, 1.0, 0.5, 1.0), Some(0.0)), // red 0%
-            color_stop(hsla(0.0, 0.5, 1.0, 0.0), Some(0.5)), // white 100%
-        ],
-    );
-
-    let mut img = ImageBuffer::new(width, height);
-
-    for (x, y, pixel) in img.enumerate_pixels_mut() {
-        let color = gradient.calculate_color(Point {
-            x: x as Pixels,
-            y: y as Pixels,
-        });
-        *pixel = color.to_rgba();
-    }
-
-    img.save("radial_gradient.png").unwrap();
+    img.save(format!("gradient-{}.png", fname)).unwrap();
 }
 
 fn main() {
-    generate_linear();
-    generate_conic();
-    generate_radial();
+    generate_linear(AngleOrCorner::To(Side::Right), "right");
+    generate_linear(AngleOrCorner::To(Side::Top), "top");
+    generate_linear(AngleOrCorner::To(Side::Bottom), "bottom");
+    generate_linear(AngleOrCorner::To(Side::Left), "left");
 }
