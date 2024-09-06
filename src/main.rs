@@ -47,7 +47,7 @@ impl Hsla {
         hsla(h, s, l, a)
     }
 
-    fn to_rgba(&self) -> Rgba<u8> {
+    fn to_rgba(self) -> Rgba<u8> {
         let (r, g, b) = hsl_to_rgb(self.h, self.s, self.l);
         Rgba([r, g, b, (self.a * 255.0) as u8])
     }
@@ -113,7 +113,7 @@ pub enum GradientType {
     Angular,
 }
 
-enum Side {
+pub enum Side {
     Top,
     Right,
     Bottom,
