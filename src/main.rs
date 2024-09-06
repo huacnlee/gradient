@@ -99,10 +99,10 @@ fn hue_to_rgb(p: f32, q: f32, t: f32) -> f32 {
 
 pub struct ColorStop {
     color: Hsla,
-    percentage: Pixels,
+    percentage: Option<f32>,
 }
 
-fn color_stop(color: Hsla, percentage: Pixels) -> ColorStop {
+fn color_stop(color: Hsla, percentage: Option<f32>) -> ColorStop {
     ColorStop { color, percentage }
 }
 
@@ -110,10 +110,10 @@ pub enum GradientType {
     Linear,
     RepeatingLinear,
     Radial,
-    Angular,
+    Conic,
 }
 
-pub enum Side {
+enum Side {
     Top,
     Right,
     Bottom,
@@ -178,10 +178,10 @@ impl Gradient {
         }
     }
 
-    pub fn angular(start: Point<Pixels>, colors: Vec<ColorStop>) -> Gradient {
+    pub fn conic(start: Point<Pixels>, colors: Vec<ColorStop>) -> Gradient {
         Gradient {
             colors,
-            gradient_type: GradientType::Angular,
+            gradient_type: GradientType::Conic,
             start,
             end: Point { x: 1.0, y: 1.0 },
         }
@@ -290,7 +290,7 @@ impl Gradient {
                 let dist = ((x - cx).powi(2) + (y - cy).powi(2)).sqrt();
                 dist / max_dist
             }
-            GradientType::Angular => {
+            GradientType::Conic => {
                 let cx = self.start.x;
                 let cy = self.start.y;
 
@@ -305,57 +305,69 @@ impl Gradient {
         };
 
         let mut i = 0;
-        while i < self.colors.len() - 1 && t > self.colors[i + 1].percentage {
+        while i < self.colors.len() - 1 && t > self.colors[i + 1].percentage.unwrap_or(1.0) {
             i += 1;
         }
 
-        let t = (t - self.colors[i].percentage)
-            / (self.colors[i + 1].percentage - self.colors[i].percentage);
+        let start_percentage = self.colors[i].percentage.unwrap_or(0.0);
+        let end_percentage = self.colors[i + 1].percentage.unwrap_or(1.0);
+
+        let t = (t - start_percentage) / (end_percentage - start_percentage);
         self.colors[i]
             .color
             .interpolate(&self.colors[i + 1].color, t)
     }
 }
 
-fn parse_color_stop(input: &str) -> ColorStop {
-    let parts: Vec<&str> = input.split_whitespace().collect();
-    let color = match parts[0] {
-        "red" => hsla(0.0, 1.0, 0.5, 1.0),
-        "orange" => hsla(30.0 / 360.0, 1.0, 0.5, 1.0),
-        "yellow" => hsla(60.0 / 360.0, 1.0, 0.5, 1.0),
-        "green" => hsla(120.0 / 360.0, 1.0, 0.5, 1.0),
-        "blue" => hsla(240.0 / 360.0, 1.0, 0.5, 1.0),
-        "indigo" => hsla(275.0 / 360.0, 1.0, 0.5, 1.0),
-        "violet" => hsla(300.0 / 360.0, 1.0, 0.5, 1.0),
-        _ => hsla(0.0, 0.0, 0.0, 1.0),
-    };
-    let percentage = if parts.len() > 1 {
-        parts[1]
-            .trim_end_matches('%')
-            .parse::<Pixels>()
-            .unwrap_or(0.0)
-            / 100.0
-    } else {
-        1.0
-    };
-    ColorStop { color, percentage }
+fn generate_conic() {
+    let width = 800;
+    let height = 600;
+
+    let gradient = Gradient::conic(
+        Point {
+            x: width as Pixels / 2.0,
+            y: height as Pixels / 2.0,
+        },
+        vec![
+            color_stop(hsla(0.0, 1.0, 0.5, 1.0), Some(0.0)), // red 0%
+            color_stop(hsla(30.0 / 360.0, 1.0, 0.5, 1.0), Some(0.14)), // orange 14%
+            color_stop(hsla(60.0 / 360.0, 1.0, 0.5, 1.0), Some(0.28)), // yellow 28%
+            color_stop(hsla(120.0 / 360.0, 1.0, 0.5, 1.0), Some(0.42)), // green 42%
+            color_stop(hsla(240.0 / 360.0, 1.0, 0.5, 1.0), Some(0.57)), // blue 57%
+            color_stop(hsla(275.0 / 360.0, 1.0, 0.5, 1.0), Some(0.71)), // indigo 71%
+            color_stop(hsla(300.0 / 360.0, 1.0, 0.5, 1.0), Some(0.85)), // violet 85%
+            color_stop(hsla(0.0, 1.0, 0.5, 1.0), Some(1.0)), // red 100%
+        ],
+    );
+
+    let mut img = ImageBuffer::new(width, height);
+
+    for (x, y, pixel) in img.enumerate_pixels_mut() {
+        let color = gradient.calculate_color(Point {
+            x: x as Pixels,
+            y: y as Pixels,
+        });
+        *pixel = color.to_rgba();
+    }
+
+    img.save("gradient-conic.png").unwrap();
 }
 
-fn main() {
+fn generate_linear() {
     let width = 800;
     let height = 600;
 
     let gradient = Gradient::linear(
-        AngleOrCorner::To(Side::BottomRight),
+        AngleOrCorner::To(Side::Right),
         vec![
-            color_stop(hsla(0.0, 1.0, 0.5, 1.0), 0.0), // red 0%
-            color_stop(hsla(30.0 / 360.0, 1.0, 0.5, 1.0), 0.14), // orange 14%
-            color_stop(hsla(60.0 / 360.0, 1.0, 0.5, 1.0), 0.28), // yellow 28%
-            color_stop(hsla(120.0 / 360.0, 1.0, 0.5, 1.0), 0.42), // green 42%
-            color_stop(hsla(240.0 / 360.0, 1.0, 0.5, 1.0), 0.57), // blue 57%
-            color_stop(hsla(275.0 / 360.0, 1.0, 0.5, 1.0), 0.71), // indigo 71%
-            color_stop(hsla(300.0 / 360.0, 1.0, 0.5, 1.0), 0.85), // violet 85%
-            color_stop(hsla(0.0, 1.0, 0.5, 1.0), 1.0), // red 100%
+            color_stop(hsla(0.0, 1.0, 0.5, 1.0), Some(0.0)), // red 0%
+            color_stop(hsla(30.0 / 360.0, 1.0, 0.5, 1.0), Some(0.14)), // orange 14%
+            color_stop(hsla(60.0 / 360.0, 1.0, 0.5, 1.0), Some(0.28)), // yellow 28%
+            color_stop(hsla(120.0 / 360.0, 1.0, 0.5, 1.0), Some(0.42)), // green 42%
+            color_stop(hsla(240.0 / 360.0, 1.0, 0.5, 1.0), Some(0.57)), // blue 57%
+            color_stop(hsla(275.0 / 360.0, 1.0, 0.5, 1.0), Some(0.71)), // indigo 71%
+            color_stop(hsla(300.0 / 360.0, 1.0, 0.5, 1.0), Some(0.85)), // violet 85%
+            color_stop(hsla(0.0, 1.0, 0.5, 1.0), Some(1.0)), // red 100%
         ],
         width as Pixels,
         height as Pixels,
@@ -371,5 +383,39 @@ fn main() {
         *pixel = color.to_rgba();
     }
 
-    img.save("gradient.png").unwrap();
+    img.save("gradient-linear.png").unwrap();
+}
+
+fn generate_radial() {
+    let width = 800;
+    let height = 600;
+
+    let gradient = Gradient::radial(
+        Point {
+            x: width as Pixels / 2.0,
+            y: height as Pixels / 2.0,
+        },
+        vec![
+            color_stop(hsla(0.0, 1.0, 0.5, 1.0), Some(0.0)), // red 0%
+            color_stop(hsla(0.0, 0.5, 1.0, 0.0), Some(0.5)), // white 100%
+        ],
+    );
+
+    let mut img = ImageBuffer::new(width, height);
+
+    for (x, y, pixel) in img.enumerate_pixels_mut() {
+        let color = gradient.calculate_color(Point {
+            x: x as Pixels,
+            y: y as Pixels,
+        });
+        *pixel = color.to_rgba();
+    }
+
+    img.save("radial_gradient.png").unwrap();
+}
+
+fn main() {
+    generate_linear();
+    generate_conic();
+    generate_radial();
 }
