@@ -1,7 +1,9 @@
 [package]
-name = "image-g"
+name = "gpui-gradient"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 image = "0.25.2"
+gpui = { git = "https://github.com/huacnlee/zed.git", branch = "export-platform-window" }
+smallvec = "1"

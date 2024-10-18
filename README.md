@@ -1,6 +1,8 @@
-# Rust to generate a Gradient like CSS
+# GradientElement for GPUI
 
-This is a simple Rust program that generates a gradient like CSS.
+This is a simple Element to render a gradient for GPUI.
+
+The core implementation is based drawing the gradient into a bitmap img, and then use `cx.paint_image()` to render the image to the GPUI.
 
 ## Ranbow Gradient
 
