@@ -7,3 +7,6 @@ edition = "2021"
 image = "0.25.2"
 gpui = { git = "https://github.com/huacnlee/zed.git", branch = "export-platform-window" }
 smallvec = "1"
+
+[dev-dependencies]
+rand = "0"

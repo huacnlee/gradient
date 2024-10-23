@@ -116,6 +116,10 @@ impl Element for GradientElement {
         _: &mut Self::PrepaintState,
         cx: &mut gpui::WindowContext,
     ) {
+        if bounds.size.width < px(1.) || bounds.size.height < px(1.) {
+            return;
+        }
+
         cx.paint_quad(gpui::PaintQuad {
             bounds,
             corner_radii: px(0.).into(),
