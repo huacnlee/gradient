@@ -249,14 +249,21 @@ impl Gradient {
         } else {
             t.0.clamp(0.0, 1.0)
         };
-
-        let mut i = 0;
-        while i < self.colors.len() - 1 && t > self.colors[i + 1].percentage.unwrap_or(1.0) {
-            i += 1;
-        }
+        let i = self
+            .colors
+            .iter()
+            .enumerate()
+            .take_while(|&(i, color_stop)| {
+                t > color_stop.percentage.unwrap_or(1.0) && i < self.colors.len() - 2
+            })
+            .last()
+            .map_or(0, |(i, _)| i);
 
         let start_percentage = self.colors[i].percentage.unwrap_or(0.0);
-        let end_percentage = self.colors[i + 1].percentage.unwrap_or(1.0);
+        let end_percentage = self
+            .colors
+            .get(i + 1)
+            .map_or(1.0, |color_stop| color_stop.percentage.unwrap_or(1.0));
 
         let t = (t - start_percentage) / (end_percentage - start_percentage);
         self.colors[i]

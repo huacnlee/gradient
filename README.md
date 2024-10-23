@@ -7,3 +7,9 @@ The core implementation is based drawing the gradient into a bitmap img, and the
 ## Ranbow Gradient
 
 <img width="912" alt="image" src="https://github.com/user-attachments/assets/5261fd6c-f666-4b94-b9ac-52f2d4e788dd">
+
+## Development
+
+```bash
+cargo run --example hello_world
+```

@@ -13,14 +13,9 @@ impl Render for HelloWorld {
             .items_center()
             .child(
                 GradientElement::linear()
-                    .side(GradientSide::BottomRight)
-                    .color_with_percentage(hsla(30.0 / 360.0, 1.0, 0.5, 1.0), 0.0)
-                    .color_with_percentage(hsla(60.0 / 360.0, 1.0, 0.5, 1.0), 0.14)
-                    .color_with_percentage(hsla(120.0 / 360.0, 1.0, 0.5, 1.0), 0.29)
-                    .color_with_percentage(hsla(240.0 / 360.0, 1.0, 0.5, 1.0), 0.43)
-                    .color_with_percentage(hsla(275.0 / 360.0, 1.0, 0.5, 1.0), 0.71)
-                    .color_with_percentage(hsla(300.0 / 360.0, 1.0, 0.5, 1.0), 0.86)
-                    .color_with_percentage(hsla(330.0 / 360.0, 1.0, 0.5, 1.0), 1.0),
+                    .side(GradientSide::Right)
+                    .color_with_percentage(hsla(30.0 / 360.0, 1.0, 0.5, 1.0), 0.2)
+                    .color_with_percentage(hsla(90.0 / 360.0, 1.0, 0.5, 1.0), 0.90),
             )
     }
 }
